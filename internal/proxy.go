@@ -2,11 +2,13 @@ package internal
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -26,6 +28,22 @@ func NewProxyHandler(cfg *Config) (http.Handler, error) {
 		transport.TLSClientConfig = transport.TLSClientConfig.Clone()
 	}
 	transport.TLSClientConfig.InsecureSkipVerify = cfg.InsecureSkipVerify
+
+	if cfg.CustomCACertFile != "" {
+		caCert, err := os.ReadFile(cfg.CustomCACertFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read custom CA cert %q: %w", cfg.CustomCACertFile, err)
+		}
+		rootCAs, err := x509.SystemCertPool()
+		if err != nil {
+			rootCAs = x509.NewCertPool()
+		}
+		if !rootCAs.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to parse custom CA cert %q", cfg.CustomCACertFile)
+		}
+		transport.TLSClientConfig.RootCAs = rootCAs
+		log.Printf("Loaded custom CA certificate from %s", cfg.CustomCACertFile)
+	}
 
 	if cfg.UpstreamProxyBase != "" {
 		proxyURL, err := buildProxyURL(cfg.UpstreamProxyBase, cfg.ProxyUsername, cfg.ProxyPassword)
@@ -61,7 +79,7 @@ func NewProxyHandler(cfg *Config) (http.Handler, error) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "ok")
+		_, _ = fmt.Fprintln(w, "ok")
 	})
 	mux.Handle("/proxy/", logging(proxy))
 	mux.Handle("/proxy", logging(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

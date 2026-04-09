@@ -61,6 +61,7 @@ edge-relay/
 | `PROXY_PASSWORD` | No | Password for upstream proxy authentication |
 | `PROMPT_FOR_PROXY_PASSWORD` | No | If `true` and `PROXY_PASSWORD` is empty, prompt for the proxy password on startup |
 | `INSECURE_SKIP_VERIFY` | No | If `true`, disables TLS certificate verification for outbound requests |
+| `CUSTOM_CA_CERT_FILE` | No | Path to a PEM file containing additional CA certificates to trust (can be a bundle with intermediate and root certs) |
 | `ENV_FILE` | No | Path to an alternate env file |
 
 Example `.env`:
@@ -72,6 +73,7 @@ UPSTREAM_PROXY=http://proxy.example.com:8080
 PROXY_USERNAME=someone007
 PROMPT_FOR_PROXY_PASSWORD=true
 INSECURE_SKIP_VERIFY=false
+CUSTOM_CA_CERT_FILE=/path/to/ca-bundle.pem
 ```
 
 You can also start from [.env.example](./.env.example).

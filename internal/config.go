@@ -19,6 +19,7 @@ type Config struct {
 	ProxyUsername      string
 	ProxyPassword      string
 	InsecureSkipVerify bool
+	CustomCACertFile   string
 }
 
 func LoadConfig() (*Config, error) {
@@ -37,6 +38,7 @@ func LoadConfig() (*Config, error) {
 	proxyPassword := os.Getenv("PROXY_PASSWORD")
 	promptForProxyPassword := strings.EqualFold(getenv("PROMPT_FOR_PROXY_PASSWORD", "false"), "true")
 	insecureSkipVerify := strings.EqualFold(getenv("INSECURE_SKIP_VERIFY", "false"), "true")
+	customCACertFile := strings.TrimSpace(os.Getenv("CUSTOM_CA_CERT_FILE"))
 
 	if promptForProxyPassword && proxyPassword == "" {
 		if proxyUsername == "" {
@@ -62,6 +64,7 @@ func LoadConfig() (*Config, error) {
 		ProxyUsername:      proxyUsername,
 		ProxyPassword:      proxyPassword,
 		InsecureSkipVerify: insecureSkipVerify,
+		CustomCACertFile:   customCACertFile,
 	}, nil
 }
 
@@ -94,9 +97,9 @@ func loadEnv() error {
 }
 
 func promptPassword(prompt string) (string, error) {
-	fmt.Fprint(os.Stderr, prompt)
+	_, _ = fmt.Fprint(os.Stderr, prompt)
 	pw, err := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Fprintln(os.Stderr)
+	_, _ = fmt.Fprintln(os.Stderr)
 	if err != nil {
 		return "", err
 	}
